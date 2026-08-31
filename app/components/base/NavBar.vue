@@ -32,7 +32,7 @@ watch(() => route.path, () => { open.value = false; });
   >
     <div class="flex items-center justify-between px-6 sm:px-10 lg:px-12 py-5">
       <NuxtLink to="/dashboard" class="font-display font-bold text-[17px] tracking-tight">
-        GhostForm
+        SnapCraftly
       </NuxtLink>
 
       <!-- Desktop nav -->
@@ -51,8 +51,8 @@ watch(() => route.path, () => { open.value = false; });
             class="absolute left-0 right-0 -bottom-0.5 h-px bg-[#B5563A]"
           />
         </NuxtLink>
-        <img v-if="user?.headshot_url" :src="user?.headshot_url" :alt="user?.name"
-          class="w-11 h-11 rounded-full object-cover shrink-0" />
+        <!-- <img v-if="user?.headshot_url" :src="user?.headshot_url" :alt="user?.name"
+          class="w-11 h-11 rounded-full object-cover shrink-0" /> -->
       </nav>
 
       <!-- Mobile -->
@@ -84,7 +84,7 @@ watch(() => route.path, () => { open.value = false; });
     >
       <nav
         v-if="open"
-        class="md:hidden border-t border-[#DDD6C9] bg-[#F7F4EF] px-6 py-4 flex flex-col"
+        class="md:hidden border-t border-[#DDD6C9] px-6 py-4 flex flex-col"
       >
         <NuxtLink
           v-for="link in items"
