@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { drawEndCard } from '~/utils/drawEndCard'
+import { drawEndCard } from '~/utils/drawEndCard';
 import { factsLine } from '~/utils/hooks'
 
 /**
@@ -172,7 +172,7 @@ async function render() {
       : null
     if (stale()) return
 
-    drawEndCard({ ctx, W, H, brand: b.value, logo, photo, reveal: 1, fonts: f })
+    drawEndCard({ ctx, W, H, brand: b.value, logo, photo, reveal: 1, fonts: f, listing: props.listing })
     return
   }
 

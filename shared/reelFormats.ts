@@ -88,6 +88,8 @@ export const REEL_FORMATS: ReelFormat[] = [
     idealSlides: [7, 10],
     hookStyle: 'One restrained line — a location or a single number. Never an adjective.',
     aiDirective:
+      'Include several close detail shots — materials, hardware, light, texture. In luxury ' +
+      'work the detail IS the product, and these are the frames people screenshot. ' +
       'Order as a considered walk-through: approach or exterior detail, entry, the main ' +
       'living space, kitchen, primary suite, then the view or outside last. Favour wide, ' +
       'composed frames over detail shots. ' +
@@ -108,6 +110,10 @@ export const REEL_FORMATS: ReelFormat[] = [
     idealSlides: [8, 12],
     hookStyle: 'A specific, concrete detail — a price band, a feature, or what makes it unusual.',
     aiDirective:
+      'Include 2-3 CLOSE DETAIL shots among the room shots — a tap, cabinetry, ' +
+      'light through a window, a fireplace, a material join. These are what make a reel ' +
+      'feel produced rather than filmed, and they are the frames buyers screenshot and ' +
+      'send to someone else. A share is worth more than a like. ' +
       'Order for a listing reveal: put the single most striking room FIRST (kitchen, view, ' +
       'backyard or primary suite — never the exterior). Then move quickly through the rest. ' +
       'Overlay lines: at most three across the whole set. Name what a buyer would actually ' +
@@ -194,6 +200,19 @@ export const REEL_FORMATS: ReelFormat[] = [
   }
 ]
 
+/**
+ * A caution worth stating in the code, because it shapes what "good" means here.
+ *
+ * Reach and leads are NOT the same thing. Agents running highly stylised viral
+ * reels report the views arriving from other agents, freelancers and people
+ * outside their market entirely — impressive numbers, no business. The reels
+ * that convert are the ones a LOCAL buyer or seller recognises as their area.
+ *
+ * That's why every format's directive pushes toward specificity — the
+ * neighbourhood, the actual price, what the place is really like — rather than
+ * generic aspiration. It's also why the app doesn't chase trending audio: it
+ * buys reach from an audience that will never transact with you.
+ */
 export function formatsFor(industry: string): ReelFormat[] {
   const i = industry || 'other'
   const matching = REEL_FORMATS.filter((f) => f.industries.includes(i))

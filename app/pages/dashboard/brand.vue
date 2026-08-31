@@ -47,6 +47,11 @@ const END_BACKGROUNDS = [
 ]
 
 /** Suggestions by trade — a blank CTA box is the hardest field to fill in. */
+/**
+ * "Comment a keyword" CTAs are what agents report actually converting views
+ * into DMs — a comment is a public engagement signal AND opens a conversation,
+ * where "link in bio" does neither. Listed first for that reason.
+ */
 const CTA_IDEAS: Record<string, string[]> = {
   realtor: ['Book a showing', 'Call for a free valuation', 'Ask me about this street'],
   trades:  ['Call for a free estimate', 'Book your quote', 'See more of our work'],

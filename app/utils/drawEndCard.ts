@@ -20,6 +20,17 @@ export interface EndCardOpts {
   brand: any
   logo: HTMLImageElement | null
   photo?: HTMLImageElement | null
+  /**
+   * Listing facts for the closing frame.
+   *
+   * Industry guidance is blunt about this: "End on the address, the price and
+   * your name — held long enough to read. A reel that goes viral without an
+   * identifiable listing or agent is a wasted 40,000 views."
+   *
+   * The end card carried the business name but not the property, so a reel
+   * that reached 40,000 people told none of them which house it was.
+   */
+  listing?: Record<string, any>
   /** 0-1. Video passes an eased value so the card settles in; carousel passes 1. */
   reveal?: number
   fonts?: { display: string; body: string }
@@ -61,7 +72,7 @@ function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, w: numb
 
 const LOGO_BOX: Record<string, number> = { small: 140, medium: 210, large: 300 }
 
-export function drawEndCard({ ctx, W, H, brand, logo, photo, reveal = 1, fonts }: EndCardOpts) {
+export function drawEndCard({ ctx, W, H, brand, logo, photo, reveal = 1, fonts, listing }: EndCardOpts) {
   const b = brand ?? {}
   const ec = b.endCard ?? {}
   const f = fonts ?? DEFAULT_FONTS
@@ -104,6 +115,16 @@ export function drawEndCard({ ctx, W, H, brand, logo, photo, reveal = 1, fonts }
     ec.showWebsite !== false ? b.contact?.website : '',
     ec.showHandle === true ? b.contact?.handle : ''
   ].filter(Boolean).join('   ·   ')
+
+  // The property line. This is the frame where the price finally appears,
+  // including on the guess-the-price format — the reveal IS the payoff.
+  const L = listing ?? {}
+  const propertyLine = [
+    L.address || '',
+    [L.beds && `${L.beds} bd`, L.baths && `${L.baths} ba`, L.sqft && `${L.sqft} sqft`]
+      .filter(Boolean).join('  ·  ')
+  ].filter(Boolean).join('\n')
+  const priceLine = L.price || ''
 
   // Video passes an eased reveal so the final frame settles rather than snapping.
   ctx.globalAlpha = reveal
@@ -237,11 +258,32 @@ export function drawEndCard({ ctx, W, H, brand, logo, photo, reveal = 1, fonts }
     ctx.fillText(cta, W / 2, py + ph / 2 + Math.round(11 * k))
   }
 
+  // Property details, above the contact line.
+  let bottomY = H - PAD
   if (contact) {
     ctx.fillStyle = textCol
     ctx.globalAlpha = reveal * 0.62
     ctx.font = `400 ${Math.round(26 * k)}px ${f.body}`
-    ctx.fillText(contact, W / 2, H - PAD)
+    ctx.fillText(contact, W / 2, bottomY)
+    bottomY -= Math.round(46 * k)
+  }
+
+  if (propertyLine || priceLine) {
+    ctx.globalAlpha = reveal
+    if (priceLine) {
+      ctx.fillStyle = accentCol
+      ctx.font = `700 ${Math.round(46 * k)}px ${f.display}`
+      ctx.fillText(priceLine, W / 2, bottomY - Math.round(8 * k))
+      bottomY -= Math.round(56 * k)
+    }
+    if (propertyLine) {
+      ctx.fillStyle = textCol
+      ctx.globalAlpha = reveal * 0.8
+      ctx.font = `400 ${Math.round(26 * k)}px ${f.body}`
+      propertyLine.split('\n').reverse().forEach((line, i) => {
+        ctx.fillText(line, W / 2, bottomY - i * Math.round(34 * k))
+      })
+    }
   }
 
   ctx.textAlign = 'left'

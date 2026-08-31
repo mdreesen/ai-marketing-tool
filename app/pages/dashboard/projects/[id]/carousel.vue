@@ -104,6 +104,8 @@ async function download() {
           :ref="(el: any) => { if (el) slideRefs[i] = el }"
           :photo-url="s.photoUrl" :overlay-line="s.overlayLine"
           :is-brand-slide="s.isBrandSlide" :brand="brand"
+          :listing="project?.listing ?? {}"
+          :hide-price="Boolean(project?.listing?.revealPrice) && !s.isBrandSlide"
           :width="540"
         />
         <span class="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded bg-black/65 text-white">

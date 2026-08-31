@@ -25,9 +25,9 @@
  * ============================================================================
  */
 
-import { drawEndCard } from '~/utils/drawEndCard'
+import { drawEndCard } from '~/utils/drawEndCard';
 import { applyGrade, applyVignette, applyLetterbox } from '~/utils/imageQuality'
-import { factsLine } from '../../shared/hooks'
+import { factsLine } from '~/utils/hooks'
 
 export interface VideoSlide {
   photoUrl: string
@@ -220,6 +220,7 @@ export function useVideoExport() {
           ctx, W, H, brand,
           logo: brandLogo,
           photo: lastPhoto,
+          listing: slide.listing,
           // Settle in rather than snapping — a static final frame reads as a
           // freeze, which is the one thing a video must not look like.
           reveal: ease(Math.min(1, t * 2.5))
@@ -407,16 +408,30 @@ export function useVideoExport() {
       ctx.imageSmoothingQuality = 'high'
 
       const framesPerSlide = Math.round(hold * fps)
+      /**
+       * The end card holds LONGER than the photo slides.
+       *
+       * "Held long enough to read" — it carries the address, price, contact
+       * details and a call to action, which is far more text than any other
+       * frame, and it has no motion to keep the eye busy. At the same duration
+       * as a photo slide it flashes past unread, which makes the whole reel a
+       * wasted impression.
+       *
+       * Minimum 3s, or 1.6x a normal slide, whichever is longer.
+       */
+      const endFrames = Math.max(Math.round(3 * fps), Math.round(framesPerSlide * 1.6))
       const fadeFrames = Math.round(fade * fps)
-      const totalFrames = framesPerSlide * slides.length
+      const endCount = slides.filter((s) => s.isBrandSlide).length
+      const totalFrames = framesPerSlide * (slides.length - endCount) + endFrames * endCount
       let frameIndex = 0
 
       stage.value = 'Rendering'
 
       for (let s = 0; s < slides.length; s++) {
         const slide = slides[s]!
-        for (let f = 0; f < framesPerSlide; f++) {
-          const t = f / framesPerSlide
+        const thisSlideFrames = slide.isBrandSlide ? endFrames : framesPerSlide
+        for (let f = 0; f < thisSlideFrames; f++) {
+          const t = f / thisSlideFrames
 
           ctx.fillStyle = '#000000'
           ctx.fillRect(0, 0, W, H)

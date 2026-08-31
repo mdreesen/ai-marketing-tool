@@ -11,7 +11,7 @@ definePageMeta({ layout: 'authenticated' })
 const route = useRoute()
 const id = route.params.id as string
 const toast = useToast()
-const { project, brand, kept, slides, displayName } = useProject(id)
+const { project, brand, kept, slides, captions, update, displayName } = useProject(id)
 
 /** Formats grounded in what actually performs, not fleeting trends. */
 const formats = computed(() => formatsFor(project.value?.industry || brand.value?.industry || 'other'))
@@ -73,6 +73,21 @@ watch(project, (p) => { if (p && !hook.value) hook.value = p.hook ?? '' }, { imm
 
 /** Openers proven to work, filtered to this format and the facts available. */
 const hookOptions = computed(() => hooksFor(chosenFormat.value, listing.value))
+
+async function chooseCaption(i: number) {
+  const next = captions.value.map((c: any, idx: number) => ({ ...c, chosen: idx === i }))
+  await update({ captions: next })
+}
+
+async function copyCaption(c: any) {
+  const text = [c.text, c.hashtags].filter(Boolean).join('\n\n')
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.add({ title: 'Caption copied.', color: 'success' })
+  } catch {
+    toast.add({ title: 'Copy didn\'t work — select the text and copy it manually.', color: 'error' })
+  }
+}
 
 async function saveHook() {
   try {
@@ -347,6 +362,39 @@ async function render() {
             better reach than a baked-in track.
           </p>
         </aside>
+      </div>
+
+      <!-- Captions.
+           These were written for the carousel, so the guidance differs: a reel
+           caption is read by the algorithm as search keywords, and it needs an
+           ask. Same options, different job. -->
+      <div class="mt-14 pt-10" style="border-top:1px solid var(--hair)">
+        <p class="pl-label" style="margin-bottom:6px">Caption</p>
+        <p class="pl-meta" style="margin-bottom:20px;max-width:56ch">
+          Pick one and edit it before posting. For a reel, lead with words
+          people search — the neighbourhood and what it is — and end with one
+          clear ask. Instagram reads captions as keywords now; hashtags matter
+          much less than they used to.
+        </p>
+
+        <div v-if="captions.length" class="space-y-3">
+          <div
+            v-for="(c, i) in captions" :key="i"
+            class="pl-panel p-5 cursor-pointer"
+            :style="c.chosen ? { borderColor: 'var(--ink)' } : {}"
+            @click="chooseCaption(i)"
+          >
+            <div class="flex items-start justify-between gap-4 mb-2.5">
+              <span class="pl-label">{{ c.tone }}</span>
+              <button class="pl-link" style="font-size:12.5px" @click.stop="copyCaption(c)">Copy</button>
+            </div>
+            <p class="text-[14px] leading-relaxed whitespace-pre-line">{{ c.text }}</p>
+            <p v-if="c.hashtags" class="pl-meta" style="margin-top:10px">{{ c.hashtags }}</p>
+          </div>
+        </div>
+        <p v-else class="pl-meta">
+          No captions yet — run the analysis from the post page first.
+        </p>
       </div>
     </template>
   </div>
