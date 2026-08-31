@@ -32,7 +32,7 @@ watch(() => route.path, () => { open.value = false; });
   >
     <div class="flex items-center justify-between px-6 sm:px-10 lg:px-12 py-5">
       <NuxtLink to="/dashboard" class="font-display font-bold text-[17px] tracking-tight">
-        SnapCraftly
+        SnapPop
       </NuxtLink>
 
       <!-- Desktop nav -->

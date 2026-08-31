@@ -27,11 +27,16 @@
 
 import { drawEndCard } from '~/utils/drawEndCard'
 import { applyGrade, applyVignette, applyLetterbox } from '~/utils/imageQuality'
+import { factsLine } from '../../shared/hooks'
 
 export interface VideoSlide {
   photoUrl: string
   overlayLine?: string
   isBrandSlide?: boolean
+  listing?: Record<string, any>
+  hidePrice?: boolean
+  isHook?: boolean
+  hookText?: string
 }
 
 export interface VideoOptions {
@@ -192,7 +197,8 @@ export function useVideoExport() {
     alpha: number,
     brandLogo: HTMLImageElement | null = null,
     lastPhoto: HTMLImageElement | null = null,
-    cinematic = false
+    cinematic = false,
+    slide: Partial<VideoSlide> = {}
   ) {
     const col = {
       bg: /^#[0-9A-Fa-f]{6}$/.test(brand?.colors?.bg) ? brand.colors.bg : '#0B0B0F',
@@ -279,6 +285,49 @@ export function useVideoExport() {
 
       ctx.fillStyle = '#FFFFFF'
       lines.slice(0, 3).forEach((l, i) => ctx.fillText(l, PAD, startY + i * lh + rise))
+    }
+
+    // ── Facts strip ──
+    const facts = factsLine(slide.listing ?? {}, slide.hidePrice)
+    if (facts) {
+      ctx.font = `600 ${Math.round(27 * k)}px 'Inter', sans-serif`
+      const fw = ctx.measureText(facts).width
+      const bh = Math.round(56 * k)
+      const bx = PAD
+      const by = H - PAD - bh - (overlayLine ? Math.round(150 * k) : 0)
+
+      ctx.fillStyle = 'rgba(0,0,0,0.62)'
+      ctx.fillRect(bx - Math.round(18 * k), by, fw + Math.round(36 * k), bh)
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillText(facts, bx, by + bh / 2 + Math.round(10 * k))
+    }
+
+    // ── Hook ──
+    // Held for the full first slide, fading slightly as it settles. Three
+    // seconds is the window that decides reach; this is that window.
+    if (slide.isHook && slide.hookText) {
+      const hookAlpha = alpha * (1 - Math.max(0, (t - 0.7) / 0.3) * 0.35)
+      ctx.globalAlpha = hookAlpha
+
+      ctx.fillStyle = 'rgba(0,0,0,0.45)'
+      ctx.fillRect(0, 0, W, H)
+
+      ctx.font = `700 ${Math.round(78 * k)}px 'Inter', sans-serif`
+      const words = slide.hookText.split(' ')
+      const hl: string[] = []
+      let line = ''
+      for (const w of words) {
+        const test = line ? `${line} ${w}` : w
+        if (ctx.measureText(test).width > W - PAD * 2 && line) { hl.push(line); line = w }
+        else line = test
+      }
+      if (line) hl.push(line)
+
+      const lh = Math.round(92 * k)
+      const sy = H / 2 - ((Math.min(hl.length, 4) - 1) * lh) / 2
+      ctx.fillStyle = '#FFFFFF'
+      hl.slice(0, 4).forEach((l, i) => ctx.fillText(l, PAD, sy + i * lh))
+      ctx.globalAlpha = alpha
     }
 
     ctx.restore()
@@ -377,12 +426,12 @@ export function useVideoExport() {
             const prev = slides[s - 1]!
             const prevT = 1
             drawFrame(ctx, images[s - 1] ?? null, W, H, prevT, s - 1, brand,
-              prev.overlayLine ?? '', prev.isBrandSlide ?? false, 1, brandLogo, lastPhoto, cinematic)
+              prev.overlayLine ?? '', prev.isBrandSlide ?? false, 1, brandLogo, lastPhoto, cinematic, prev)
           }
 
           const alpha = (f < fadeFrames && s > 0) ? ease(f / fadeFrames) : 1
           drawFrame(ctx, images[s] ?? null, W, H, t, s, brand,
-            slide.overlayLine ?? '', slide.isBrandSlide ?? false, alpha, brandLogo, lastPhoto, cinematic)
+            slide.overlayLine ?? '', slide.isBrandSlide ?? false, alpha, brandLogo, lastPhoto, cinematic, slide)
 
           const frame = new (window as any).VideoFrame(canvas, {
             timestamp: (frameIndex * 1e6) / fps,

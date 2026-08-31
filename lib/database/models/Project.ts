@@ -37,6 +37,29 @@ const projectSchema = new Schema({
   // Chosen reel format — shapes both the AI ordering and the video pacing.
   reelFormat: { type: String, default: '' },
 
+  /**
+   * Listing facts.
+   *
+   * Every source on realtor reels says the same thing: put the price, bed and
+   * bath count, and the neighbourhood on screen. The app had nowhere to enter
+   * them, so it could never produce the one thing agents actually post.
+   *
+   * All optional — a trades or church user simply won't fill them in.
+   */
+  listing: {
+    price: { type: String, default: '' },       // string, not number: "$425,000" / "From $1.2M"
+    beds: { type: String, default: '' },
+    baths: { type: String, default: '' },
+    sqft: { type: String, default: '' },
+    neighborhood: { type: String, default: '' },
+    address: { type: String, default: '' },
+    /** Hold the price back to the final slide — the "guess the price" format. */
+    revealPrice: { type: Boolean, default: false }
+  },
+
+  /** The opening line. Its own field because it does its own job. */
+  hook: { type: String, default: '' },
+
   assets: [assetSchema],
 
   analysis: {

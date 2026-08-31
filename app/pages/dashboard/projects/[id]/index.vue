@@ -33,11 +33,21 @@ const step = computed(() => {
 const isComplete = computed(() => status.value === 'exported')
 
 const ctx = reactive({ title: '', postType: 'general', notes: '' })
+
+/**
+ * Listing facts. Shown only for property post types — a roofer has no beds
+ * and baths, and asking would be noise.
+ */
+const listing = reactive({
+  price: '', beds: '', baths: '', sqft: '', neighborhood: '', address: '', revealPrice: false
+})
+const isProperty = computed(() => ['listing', 'just_sold'].includes(ctx.postType))
 watch(project, (p) => {
   if (!p) return
   ctx.title = p.title === 'Untitled' ? '' : (p.title ?? '')
   ctx.postType = p.postType ?? 'general'
   ctx.notes = p.notes ?? ''
+  Object.assign(listing, p.listing ?? {})
 }, { immediate: true })
 
 const POST_TYPES = [
@@ -82,7 +92,8 @@ async function saveContextAndAnalyse() {
       body: {
         title: (ctx.title || '').trim() || suggestedTitle.value,
         notes: ctx.notes,
-        postType: ctx.postType
+        postType: ctx.postType,
+        listing: { ...listing }
       }
     })
   } catch { /* the analysis matters more than the title */ }
@@ -172,6 +183,51 @@ onBeforeUnmount(() => { if (pollTimer) clearInterval(pollTimer) })
             <span class="block text-[14px] font-semibold">{{ t.label }}</span>
             <span class="block text-[12px] pl-meta-c mt-0.5">{{ t.hint }}</span>
           </button>
+        </div>
+
+        <!-- Listing facts. Every guide on realtor reels says to put price,
+             beds, baths and area on screen — there was nowhere to enter them. -->
+        <div v-if="isProperty" class="mb-7 pt-6" style="border-top:1px solid var(--hair)">
+          <p class="pl-label" style="margin-bottom:6px">Listing details</p>
+          <p class="pl-meta" style="margin-bottom:16px;max-width:52ch">
+            These go on the video itself. Leave anything blank and it's simply left off.
+          </p>
+
+          <div class="grid sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-[13px] pl-body-c mb-1.5">Price</label>
+              <input v-model="listing.price" class="pl-input" placeholder="$425,000" />
+            </div>
+            <div>
+              <label class="block text-[13px] pl-body-c mb-1.5">Beds</label>
+              <input v-model="listing.beds" class="pl-input" placeholder="3" />
+            </div>
+            <div>
+              <label class="block text-[13px] pl-body-c mb-1.5">Baths</label>
+              <input v-model="listing.baths" class="pl-input" placeholder="2" />
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-[13px] pl-body-c mb-1.5">Square feet</label>
+              <input v-model="listing.sqft" class="pl-input" placeholder="1,840" />
+            </div>
+            <div>
+              <label class="block text-[13px] pl-body-c mb-1.5">Neighbourhood</label>
+              <input v-model="listing.neighborhood" class="pl-input" placeholder="Whitefish" />
+            </div>
+          </div>
+
+          <label class="flex items-start gap-2.5 cursor-pointer">
+            <input v-model="listing.revealPrice" type="checkbox" class="pl-check mt-1" />
+            <span>
+              <span class="text-[14px]">Hold the price back until the end</span>
+              <span class="pl-meta" style="display:block">
+                The "guess the price" angle — agents report far more comments,
+                and comments are what push a reel past your followers.
+              </span>
+            </span>
+          </label>
         </div>
 
         <label class="block text-[13px] pl-body-c mb-2">Anything we should know?</label>

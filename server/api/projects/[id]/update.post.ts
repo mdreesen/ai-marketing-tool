@@ -9,6 +9,12 @@ const bodySchema = z.object({
   title: z.string().optional(),
   notes: z.string().optional(),
   reelFormat: z.string().optional(),
+  hook: z.string().max(90).optional(),
+  listing: z.object({
+    price: z.string().max(24), beds: z.string().max(8), baths: z.string().max(8),
+    sqft: z.string().max(16), neighborhood: z.string().max(48),
+    address: z.string().max(90), revealPrice: z.boolean()
+  }).partial().optional(),
   status: z.enum(['draft','analysing','ready','exported','failed']).optional(),
   assets: z.array(z.any()).optional(),
   captions: z.array(z.any()).optional(),

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { drawEndCard } from '~/utils/drawEndCard'
+import { factsLine } from '~/utils/hooks'
 
 /**
  * SLIDE COMPOSER
@@ -18,6 +19,13 @@ interface Props {
   total?: number
   brand?: any
   isBrandSlide?: boolean
+  /** Listing facts strip — price · beds · baths · area. */
+  listing?: Record<string, any>
+  /** Hide the price (guess-the-price format). */
+  hidePrice?: boolean
+  /** Bold opening frame. The first three seconds decide reach. */
+  isHook?: boolean
+  hookText?: string
   /** Preview width; height follows the brand's chosen ratio. */
   width?: number
   /** Optional per-slide overrides, so one slide can differ from the brand default. */
@@ -28,6 +36,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   photoUrl: '', overlayLine: '', index: 0, total: 1,
   brand: () => ({}), isBrandSlide: false, width: 1080,
+  listing: () => ({}), hidePrice: false, isHook: false, hookText: '',
   templateOverride: '', focalX: 0.5, focalY: 0.5
 })
 
@@ -263,6 +272,41 @@ async function render() {
     ctx.fillStyle = template.value === 'editorial' || template.value === 'banner' ? col.fg : '#FFFFFF'
     ctx.font = `600 ${Math.round(56 * k)}px ${f.display}`
     lines.forEach((l, i) => ctx.fillText(l, PAD + inset, textY + i * lh))
+  }
+
+  // ── Facts strip ──
+  // Guidance is specific: put price/beds/baths/area ON the visual, not on a
+  // title card, "so it feels like part of the content, not a real estate ad."
+  const facts = factsLine(props.listing, props.hidePrice)
+  if (facts) {
+    ctx.font = `600 ${Math.round(27 * k)}px ${f.body}`
+    const fw = ctx.measureText(facts).width
+    const bh = Math.round(56 * k)
+    const bx = PAD + inset
+    const by = H - PAD - inset - bh
+
+    ctx.fillStyle = 'rgba(0,0,0,0.62)'
+    roundRect(ctx, bx - Math.round(18 * k), by, fw + Math.round(36 * k), bh, Math.round(4 * k))
+    ctx.fill()
+
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fillText(facts, bx, by + bh / 2 + Math.round(10 * k))
+  }
+
+  // ── Hook frame ──
+  // A bold opening statement, not a caption. This is the gate that decides
+  // whether anyone sees the rest.
+  if (props.isHook && props.hookText) {
+    ctx.fillStyle = 'rgba(0,0,0,0.42)'
+    ctx.fillRect(0, 0, W, H)
+
+    ctx.font = `700 ${Math.round(78 * k)}px ${f.display}`
+    const lines = wrapText(ctx, props.hookText, W - PAD * 2).slice(0, 4)
+    const lh = Math.round(92 * k)
+    const startY = H / 2 - ((lines.length - 1) * lh) / 2
+
+    ctx.fillStyle = '#FFFFFF'
+    lines.forEach((l, i) => ctx.fillText(l, PAD, startY + i * lh))
   }
 
   drawWatermark(ctx, W, H, PAD, k, f, inset)

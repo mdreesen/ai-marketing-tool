@@ -62,6 +62,24 @@ const PACE_SCALE = { snappy: 0.55, natural: 1, relaxed: 1.35 }
 
 const activeFormat = computed(() => findFormat(chosenFormat.value))
 
+const listing = computed(() => project.value?.listing ?? {})
+/** Guess-the-price: keep it off every slide until the end card. */
+const hidePrice = computed(() =>
+  Boolean(listing.value?.revealPrice) || chosenFormat.value === 'price_reveal'
+)
+
+const hook = ref('')
+watch(project, (p) => { if (p && !hook.value) hook.value = p.hook ?? '' }, { immediate: true })
+
+/** Openers proven to work, filtered to this format and the facts available. */
+const hookOptions = computed(() => hooksFor(chosenFormat.value, listing.value))
+
+async function saveHook() {
+  try {
+    await $fetch(`/api/projects/${id}/update`, { method: 'POST', body: { hook: hook.value } })
+  } catch { /* not worth interrupting for */ }
+}
+
 /**
  * Persist the format. The analyse endpoint reads project.reelFormat to pick
  * the AI directive — it was never being written, so every format's ordering
@@ -126,10 +144,15 @@ async function render() {
   done.value = false
   try {
     const blob = await exportVideo(
-      slides.value.map((s: any) => ({
+      slides.value.map((s: any, i: number) => ({
         photoUrl: s.photoUrl,
         overlayLine: s.overlayLine,
-        isBrandSlide: s.isBrandSlide
+        isBrandSlide: s.isBrandSlide,
+        listing: listing.value,
+        hidePrice: hidePrice.value,
+        // The hook goes on the FIRST frame only. Three seconds is the gate.
+        isHook: i === 0 && Boolean(hook.value),
+        hookText: i === 0 ? hook.value : ''
       })),
       brand.value,
       {
@@ -219,6 +242,28 @@ async function render() {
               you have {{ slides.length }}.
             </template>
           </p>
+
+          <!-- The hook. The first three seconds decide whether anyone sees
+               the rest, so it gets its own field rather than being buried. -->
+          <label class="pl-label" style="display:block;margin-bottom:6px">Opening line</label>
+          <p class="pl-meta" style="margin-bottom:12px;max-width:54ch">
+            Shown big on the first frame. This is what decides whether people
+            keep watching — never "Welcome to this beautiful home".
+          </p>
+          <input
+            v-model="hook" class="pl-input mb-2.5" maxlength="90"
+            placeholder="Wait until you see the kitchen"
+            @blur="saveHook"
+          />
+          <div v-if="hookOptions.length" class="flex flex-wrap gap-1.5 mb-7">
+            <button
+              v-for="h in hookOptions" :key="h"
+              class="pl-link" style="font-size:12.5px;border:1px solid var(--hair);padding:5px 10px;border-radius:2px"
+              @click="hook = h; saveHook()"
+            >
+              {{ h }}
+            </button>
+          </div>
 
           <label class="block text-[13px] pl-body-c mb-2.5">Pace</label>
           <div class="grid sm:grid-cols-3 gap-2.5 mb-7">

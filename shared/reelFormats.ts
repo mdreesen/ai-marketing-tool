@@ -44,6 +44,39 @@ export interface ReelFormat {
 
 export const REEL_FORMATS: ReelFormat[] = [
   {
+    value: 'price_reveal',
+    label: 'Guess the price',
+    hint: 'Show the home, reveal the price last',
+    why: 'Agents report roughly 10x their usual engagement. People comment their guess, and comments are what push a reel past your followers.',
+    industries: ['realtor'],
+    targetSeconds: 20,
+    secondsPerSlide: 2.0,
+    crossfade: 0.35,
+    idealSlides: [6, 9],
+    hookStyle: 'Ask the question outright — "Guess the price before the end".',
+    aiDirective:
+      'Order to build toward a reveal: strongest room first to earn the watch, then the ' +
+      'rest, with the most impressive space LAST. Do NOT mention or imply price in any ' +
+      'overlay line — the whole format depends on withholding it. Two or three overlay ' +
+      'lines maximum, and none of them should describe value or cost.'
+  },
+  {
+    value: 'just_listed',
+    label: 'Just listed teaser',
+    hint: '3-5 shots, facts on screen, under 15s',
+    why: 'Posted the day a listing goes live. Short enough to finish, which is the signal that earns reach.',
+    industries: ['realtor'],
+    targetSeconds: 13,
+    secondsPerSlide: 1.6,
+    crossfade: 0.2,
+    idealSlides: [3, 6],
+    hookStyle: 'State the facts flatly — beds, baths, area, price.',
+    aiDirective:
+      'This is a teaser, not a tour. Keep ONLY the 3-5 strongest photos — drop anything ' +
+      'merely adequate, even if it means a short set. Lead with the most striking room, ' +
+      'never the exterior. One overlay line at most; the facts strip carries the detail.'
+  },
+  {
     value: 'luxury_walkthrough',
     label: 'Luxury walkthrough',
     hint: 'Slow, quiet, cinematic',
