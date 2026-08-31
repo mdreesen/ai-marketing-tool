@@ -1,0 +1,332 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* ============================================================================
+   POSTLINE — monochrome design system
+
+   Danish principles applied literally:
+     · Restraint. Nothing decorative earns its place.
+     · Space does the work colour used to do.
+     · Hairlines instead of boxes. Structure you can feel, not see.
+     · Warm neutrals, never clinical white — #FFFFFF is a screen, #FAFAF8 is paper.
+
+   THE CONSTRAINT THAT SHAPED EVERYTHING:
+   With no colour, status can't be signalled by hue. So it's signalled by FORM —
+   filled, hollow, or dashed — and always paired with a word. That's more
+   accessible than colour ever was: it survives greyscale printing, low
+   contrast screens, and every kind of colour blindness.
+   ============================================================================ */
+
+@theme {
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  /* Surfaces — warm, paper-like, four steps only */
+  --paper:      #FAFAF8;   /* page */
+  --paper-2:    #F2F1ED;   /* panels, inputs */
+  --paper-3:    #E8E7E2;   /* hover, pressed */
+
+  /* Ink — three weights is enough for any hierarchy */
+  --ink:        #121211;   /* headings, primary text */
+  --ink-2:      #55554F;   /* body, secondary */
+  --ink-3:      #8C8C84;   /* captions, meta */
+
+  /* Structure */
+  --hair:       #E0DFD9;   /* hairlines */
+  --hair-2:     #C9C8C1;   /* stronger dividers, focus */
+
+  /* Black is the accent. Used for one thing per screen. */
+  --accent:     #121211;
+
+  --ui-bg: var(--paper);
+  --ui-text: var(--ink);
+  --ui-primary: var(--ink);
+}
+
+html { -webkit-font-smoothing: antialiased; }
+
+body {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 16px base. The old 13-14px body text was the main readability problem. */
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ---------- Typography ----------
+   Hierarchy from size and weight only. No colour, no ornament. */
+.pl-display {
+  font-weight: 600;
+  letter-spacing: -0.021em;   /* tightens as size grows — optical, not uniform */
+  color: var(--ink);
+}
+
+.pl-h1 { font-size: clamp(28px, 4vw, 38px); line-height: 1.15; font-weight: 600; letter-spacing: -0.025em; }
+.pl-h2 { font-size: 22px; line-height: 1.25; font-weight: 600; letter-spacing: -0.02em; }
+.pl-h3 { font-size: 17px; line-height: 1.35; font-weight: 600; letter-spacing: -0.01em; }
+
+.pl-lede { font-size: 17px; line-height: 1.65; color: var(--ink-2); max-width: 58ch; }
+.pl-body { font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+.pl-meta { font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
+
+/* Section label. Small caps, wide tracking — the one typographic flourish. */
+.pl-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+/* ---------- Surfaces ----------
+   A hairline, not a shadow. Depth is implied, never drawn. */
+.pl-panel {
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 2px;   /* nearly square — soft corners read as consumer app */
+}
+.pl-panel-inset { background: var(--paper-2); border: 1px solid var(--hair); border-radius: 2px; }
+
+.pl-panel-hover { transition: border-color .16s ease; }
+.pl-panel-hover:hover { border-color: var(--hair-2); }
+
+/* A rule with breathing room. Used far more than panels. */
+.pl-rule { height: 1px; background: var(--hair); border: 0; }
+
+/* ---------- Inputs ----------
+   Underline, not a box. Less ink on the page for the same function. */
+.pl-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--hair-2);
+  border-radius: 0;
+  color: var(--ink);
+  padding: 10px 2px;
+  font-size: 16px;   /* 16px prevents iOS zoom-on-focus */
+  font-family: inherit;
+  outline: none;
+  transition: border-color .16s ease;
+}
+.pl-input::placeholder { color: var(--ink-3); }
+.pl-input:focus { border-bottom-color: var(--ink); }
+
+/* Boxed variant where a field needs to read as a container (textarea, select) */
+.pl-input-box {
+  background: var(--paper-2);
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  padding: 12px 14px;
+}
+.pl-input-box:focus { border-color: var(--ink); background: var(--paper); }
+
+/* ---------- Buttons ----------
+   One filled button per screen. Everything else is a rule. */
+.pl-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .16s ease;
+}
+.pl-btn:hover { opacity: 0.82; }
+.pl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.pl-btn-quiet {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--hair-2);
+}
+.pl-btn-quiet:hover { background: var(--paper-2); opacity: 1; border-color: var(--ink); }
+
+/* Destructive is still monochrome — the WORD carries the weight, and a
+   dashed border marks it as different without shouting. */
+.pl-btn-danger {
+  background: transparent;
+  color: var(--ink);
+  border: 1px dashed var(--hair-2);
+}
+.pl-btn-danger:hover { border-color: var(--ink); border-style: solid; }
+
+/* A text button that isn't a button-shaped thing */
+.pl-link {
+  background: none; border: 0; padding: 0;
+  font-size: 14px; font-family: inherit; color: var(--ink-2);
+  border-bottom: 1px solid var(--hair-2);
+  cursor: pointer;
+  transition: color .16s ease, border-color .16s ease;
+}
+.pl-link:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+/* ---------- Choice ----------
+   Selection shown by a solid border and a filled marker, not a tint. */
+.pl-choice {
+  display: block; width: 100%; text-align: left;
+  background: transparent;
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  padding: 14px 16px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .16s ease;
+}
+.pl-choice:hover { border-color: var(--hair-2); }
+.pl-choice[data-selected="true"] { border-color: var(--ink); }
+.pl-choice-title { font-size: 15px; font-weight: 500; color: var(--ink); display: block; }
+.pl-choice-hint { font-size: 13px; color: var(--ink-3); display: block; margin-top: 2px; }
+
+/* ---------- Status ----------
+   FORM not colour: filled = done, hollow = waiting, dashed = needs attention.
+   Always paired with a word, never the only signal. */
+.pl-pip { width: 8px; height: 8px; display: inline-block; flex-shrink: 0; }
+.pl-pip-done    { background: var(--ink); }
+.pl-pip-idle    { background: transparent; border: 1px solid var(--hair-2); }
+.pl-pip-working { background: transparent; border: 1px solid var(--ink); animation: plPulse 1.6s ease-in-out infinite; }
+.pl-pip-failed  { background: transparent; border: 1px dashed var(--ink); }
+@keyframes plPulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+
+/* ---------- Stepper ---------- */
+.pl-steps { display: flex; align-items: center; list-style: none; flex-wrap: wrap; }
+.pl-step { display: flex; align-items: center; gap: 10px; }
+.pl-step-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500;
+  background: transparent; border: 1px solid var(--hair-2); color: var(--ink-3);
+  flex-shrink: 0;
+  transition: all .18s ease;
+}
+.pl-step.is-current .pl-step-dot { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pl-step.is-done .pl-step-dot { background: transparent; border-color: var(--ink); color: var(--ink); }
+.pl-step-label { font-size: 14px; color: var(--ink-3); white-space: nowrap; transition: color .18s ease; }
+.pl-step.is-current .pl-step-label { color: var(--ink); font-weight: 500; }
+.pl-step.is-done .pl-step-label { color: var(--ink-2); }
+.pl-step-line { width: 40px; height: 1px; background: var(--hair); margin: 0 14px; }
+.pl-step.is-done .pl-step-line { background: var(--hair-2); }
+@media (max-width: 640px) {
+  .pl-step-label { display: none; }
+  .pl-step.is-current .pl-step-label { display: inline; }
+  .pl-step-line { width: 20px; margin: 0 8px; }
+}
+
+/* ---------- Slides ---------- */
+.pl-slide {
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+/* Excluded photos: greyed and dimmed. Reads as "set aside", not "broken". */
+.pl-slide-dropped { opacity: .38; filter: grayscale(1); transition: opacity .16s ease, filter .16s ease; }
+.pl-slide-dropped:hover { opacity: 1; filter: grayscale(0); }
+
+/* ---------- Dropzone ---------- */
+.pl-drop {
+  border: 1px dashed var(--hair-2);
+  border-radius: 2px;
+  background: transparent;
+  padding: 56px 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
+}
+.pl-drop:hover { border-color: var(--ink-3); background: var(--paper-2); }
+.pl-drop.is-dragging { border-color: var(--ink); border-style: solid; background: var(--paper-2); }
+.pl-drop.is-busy { cursor: default; border-style: solid; }
+
+.pl-drop-icon {
+  width: 40px; height: 40px; margin: 0 auto 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-3);
+}
+.pl-drop.is-dragging .pl-drop-icon { color: var(--ink); }
+.pl-drop-title { font-size: 17px; font-weight: 500; margin-bottom: 6px; color: var(--ink); }
+.pl-drop-sub { font-size: 14px; color: var(--ink-3); }
+.pl-drop-error { font-size: 13.5px; color: var(--ink); margin-top: 12px; text-align: center; font-weight: 500; }
+
+/* Progress: a filling rule. */
+.pl-progress { height: 1px; background: var(--hair); margin: 18px auto 12px; max-width: 280px; overflow: hidden; }
+.pl-progress-fill { height: 100%; background: var(--ink); transition: width .25s ease; }
+
+/* ---------- Spinner ---------- */
+.pl-spin {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--hair-2);
+  border-top-color: var(--ink);
+  animation: plSpin .9s linear infinite;
+}
+@keyframes plSpin { to { transform: rotate(360deg) } }
+
+/* ---------- Inline title ---------- */
+.pl-title-input {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--ink);
+  padding: 2px 6px;
+  margin-left: -6px;
+  width: 100%;
+  max-width: 26ch;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .16s ease;
+}
+.pl-title-input::placeholder { color: var(--ink-3); }
+.pl-title-input:hover { border-color: var(--hair); }
+.pl-title-input:focus { border-color: var(--hair-2); background: var(--paper-2); }
+
+/* ---------- Output choice ---------- */
+.pl-output-icon {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-3);
+  transition: color .16s ease;
+}
+.pl-panel-hover:hover .pl-output-icon { color: var(--ink); }
+
+/* ---------- Card delete ---------- */
+.pl-card-wrap { height: 100%; }
+.pl-card { position: relative; height: 100%; }
+.pl-card-del {
+  position: absolute; top: 12px; right: 12px;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  color: var(--ink-3);
+  opacity: 0;
+  transition: opacity .16s ease, color .16s ease, border-color .16s ease;
+}
+.pl-card:hover .pl-card-del, .pl-card-del:focus-visible { opacity: 1; }
+.pl-card-del:hover { color: var(--ink); border-color: var(--ink); }
+@media (hover: none) { .pl-card-del { opacity: 1; } }
+
+/* ---------- Focus ----------
+   Visible for keyboard users, invisible for mouse. Non-negotiable. */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+
+/* ---------- Colour utilities ----------
+   Named by role, not value. Swapping a token changes every use. */
+.pl-ink-c   { color: var(--ink); }
+.pl-body-c  { color: var(--ink-2); }
+.pl-meta-c  { color: var(--ink-3); }
+.pl-hair-c  { border-color: var(--hair); }
+.pl-bg2-c   { background: var(--paper-2); }
+.pl-check   { accent-color: var(--ink); }
