@@ -5,8 +5,24 @@
  * those is 4MB instead of 40MB — faster on a job-site connection, cheaper to
  * store, and vision analysis costs less because the images are smaller.
  */
-const MAX_EDGE = 2000
-const QUALITY = 0.85
+/**
+ * 3200px, not 2000px.
+ *
+ * A landscape photo cover-fitted into a 9:16 reel is cropped hard on the
+ * sides, so the vertical dimension has to stretch to fill 1920px — and with a
+ * 1.10 Ken Burns zoom on top, a 2000px source ends up UPSCALED 1.58x. That
+ * upscaling is where video softness actually comes from.
+ *
+ *   cap 2000px -> worst case 1.58x upscale
+ *   cap 2400px -> 1.32x
+ *   cap 2800px -> 1.13x
+ *   cap 3200px -> 0.99x   ← no upscaling for any common camera aspect
+ *
+ * Costs roughly 2.5x the storage per photo (~400KB -> ~1MB at q0.88), which
+ * is a fair trade for output that isn't soft. Egress is free on R2.
+ */
+const MAX_EDGE = 3200
+const QUALITY = 0.88
 
 /**
  * Canvas has a maximum drawable area. Safari caps around 16.7M pixels and will

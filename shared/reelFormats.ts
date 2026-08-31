@@ -44,6 +44,26 @@ export interface ReelFormat {
 
 export const REEL_FORMATS: ReelFormat[] = [
   {
+    value: 'luxury_walkthrough',
+    label: 'Luxury walkthrough',
+    hint: 'Slow, quiet, cinematic',
+    why: 'Restraint is what reads as expensive. Slow motion, long fades, almost no text — the property carries it.',
+    industries: ['realtor'],
+    targetSeconds: 32,
+    secondsPerSlide: 4.0,
+    crossfade: 1.1,
+    idealSlides: [7, 10],
+    hookStyle: 'One restrained line — a location or a single number. Never an adjective.',
+    aiDirective:
+      'Order as a considered walk-through: approach or exterior detail, entry, the main ' +
+      'living space, kitchen, primary suite, then the view or outside last. Favour wide, ' +
+      'composed frames over detail shots. ' +
+      'CRITICAL: use AT MOST ONE overlay line in the entire set, on the first slide. ' +
+      'Luxury property marketing does not caption its own photographs — text on the images ' +
+      'is what makes a listing look mid-market. If a line is used it should state a fact ' +
+      '(a location, an acreage, a price band), never a description of what is visible.'
+  },
+  {
     value: 'listing_reveal',
     label: 'Listing reveal',
     hint: 'Best shot first, then a fast walk through',
@@ -151,20 +171,3 @@ export function findFormat(value: string): ReelFormat | undefined {
   return REEL_FORMATS.find((f) => f.value === value)
 }
 
-/**
- * Pace the format to hit its target length for THIS number of slides.
- *
- * A fixed seconds-per-slide means a 6-photo set runs 13s and a 14-photo set
- * runs 31s from the same "format" — which makes the format meaningless. This
- * keeps the intended rhythm while landing near the target duration, clamped so
- * it never becomes a slideshow or a strobe.
- */
-export function paceFor(format: ReelFormat, slideCount: number) {
-  if (slideCount <= 0) return { secondsPerSlide: format.secondsPerSlide, crossfade: format.crossfade }
-  const ideal = format.targetSeconds / slideCount
-  const secondsPerSlide = Math.min(3.4, Math.max(1.2, +ideal.toFixed(2)))
-  return {
-    secondsPerSlide,
-    crossfade: Math.min(format.crossfade, secondsPerSlide * 0.28)
-  }
-}

@@ -26,6 +26,7 @@
  */
 
 import { drawEndCard } from '~/utils/drawEndCard'
+import { applyGrade, applyVignette, applyLetterbox } from '~/utils/imageQuality'
 
 export interface VideoSlide {
   photoUrl: string
@@ -34,6 +35,12 @@ export interface VideoSlide {
 }
 
 export interface VideoOptions {
+  /**
+   * Cinematic treatment. Slower motion, 2.39:1 letterbox, a restrained grade
+   * and a vignette. Also raises the bitrate — subtle grading is exactly where
+   * compression banding becomes visible.
+   */
+  cinematic?: boolean
   width?: number
   height?: number
   fps?: number
@@ -139,6 +146,20 @@ const ease = (t: number) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 
  * Ken Burns move for slide n. Alternating direction stops a long carousel
  * feeling mechanical — every shot drifting the same way is its own tell.
  */
+/**
+ * Luxury motion: half the travel, always slow, never a pan reversal mid-set.
+ * Big obvious zooms are the clearest tell of an automated slideshow.
+ */
+function cinematicMotionFor(i: number) {
+  const moves = [
+    { fromScale: 1.00, toScale: 1.045, fromX: 0.5,  toX: 0.5,  fromY: 0.52, toY: 0.48 },
+    { fromScale: 1.045, toScale: 1.00, fromX: 0.5,  toX: 0.5,  fromY: 0.48, toY: 0.52 },
+    { fromScale: 1.03, toScale: 1.03, fromX: 0.45, toX: 0.55, fromY: 0.5,  toY: 0.5  },
+    { fromScale: 1.03, toScale: 1.06, fromX: 0.5,  toX: 0.5,  fromY: 0.5,  toY: 0.5  }
+  ]
+  return moves[i % moves.length]!
+}
+
 function motionFor(i: number) {
   const moves = [
     { fromScale: 1.00, toScale: 1.10, fromX: 0.5,  toX: 0.5,  fromY: 0.5,  toY: 0.5  }, // push in
@@ -170,7 +191,8 @@ export function useVideoExport() {
     isBrandSlide: boolean,
     alpha: number,
     brandLogo: HTMLImageElement | null = null,
-    lastPhoto: HTMLImageElement | null = null
+    lastPhoto: HTMLImageElement | null = null,
+    cinematic = false
   ) {
     const col = {
       bg: /^#[0-9A-Fa-f]{6}$/.test(brand?.colors?.bg) ? brand.colors.bg : '#0B0B0F',
@@ -205,7 +227,7 @@ export function useVideoExport() {
     }
 
     // ── Ken Burns ──
-    const m = motionFor(slideIndex)
+    const m = cinematic ? cinematicMotionFor(slideIndex) : motionFor(slideIndex)
     const e = ease(t)
     const scale = m.fromScale + (m.toScale - m.fromScale) * e
     const fx = m.fromX + (m.toX - m.fromX) * e
@@ -215,6 +237,14 @@ export function useVideoExport() {
     const dw = img.width * cover
     const dh = img.height * cover
     ctx.drawImage(img, (W - dw) * fx, (H - dh) * fy, dw, dh)
+
+    if (cinematic) {
+      // Order matters: grade the image, then vignette, then bars on top —
+      // a vignette applied over the bars would darken them unevenly.
+      applyGrade(ctx, W, H, 1)
+      applyVignette(ctx, W, H, 0.30)
+      applyLetterbox(ctx, W, H, 2.39)
+    }
 
     if (overlayLine) {
       // Text arrives after the image has settled — landing together reads as a
@@ -268,6 +298,7 @@ export function useVideoExport() {
     const fps = opts.fps ?? 30
     const hold = opts.secondsPerSlide ?? 3
     const fade = opts.crossfade ?? 0.5
+    const cinematic = opts.cinematic ?? false
 
     rendering.value = true
     progress.value = 0
@@ -305,7 +336,12 @@ export function useVideoExport() {
       // video at 10 Mbps becomes a painful upload on mobile data, so ease it
       // down past ~30s rather than shipping a 60MB file.
       const estSeconds = slides.length * hold
-      const bitrate = estSeconds > 30 ? 7_500_000 : 10_000_000
+      // Cinematic mode grades and vignettes, which puts smooth tonal ramps
+      // across the frame — precisely where H.264 banding shows first. Worth
+      // the extra bitrate; without it the grade creates visible steps in
+      // walls and skies.
+      const base = cinematic ? 14_000_000 : 10_000_000
+      const bitrate = estSeconds > 30 ? Math.round(base * 0.78) : base
 
       encoder.configure({
         codec: 'avc1.42002A',
@@ -341,12 +377,12 @@ export function useVideoExport() {
             const prev = slides[s - 1]!
             const prevT = 1
             drawFrame(ctx, images[s - 1] ?? null, W, H, prevT, s - 1, brand,
-              prev.overlayLine ?? '', prev.isBrandSlide ?? false, 1, brandLogo, lastPhoto)
+              prev.overlayLine ?? '', prev.isBrandSlide ?? false, 1, brandLogo, lastPhoto, cinematic)
           }
 
           const alpha = (f < fadeFrames && s > 0) ? ease(f / fadeFrames) : 1
           drawFrame(ctx, images[s] ?? null, W, H, t, s, brand,
-            slide.overlayLine ?? '', slide.isBrandSlide ?? false, alpha, brandLogo, lastPhoto)
+            slide.overlayLine ?? '', slide.isBrandSlide ?? false, alpha, brandLogo, lastPhoto, cinematic)
 
           const frame = new (window as any).VideoFrame(canvas, {
             timestamp: (frameIndex * 1e6) / fps,

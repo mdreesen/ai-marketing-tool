@@ -28,14 +28,6 @@ watch([project, formats], () => {
   chosenFormat.value = formats.value.find((f) => f.value === want)?.value ?? formats.value[0]!.value
 }, { immediate: true })
 
-const activeFormat = computed(() => findFormat(chosenFormat.value))
-
-/** Pace adapts to photo count so a format keeps its intended length. */
-const adaptivePace = computed(() =>
-  activeFormat.value
-    ? paceFor(activeFormat.value, slides.value.length)
-    : SETTINGS[pace.value]
-)
 const {
   exportVideo, checkVideoSupport,
   rendering, progress, stage
@@ -59,10 +51,51 @@ const PACES = [
   { value: 'relaxed', label: 'Relaxed', seconds: 3.4, hint: 'Time to take each shot in' }
 ]
 
-const SETTINGS = {
-  snappy:  { secondsPerSlide: 1.4, crossfade: 0.25 },
-  natural: { secondsPerSlide: 2.4, crossfade: 0.4 },
-  relaxed: { secondsPerSlide: 3.4, crossfade: 0.6 }
+/**
+ * Pace is a MULTIPLIER on the format's target length, not a separate timing.
+ *
+ * This was the bug: adaptivePace read only the format, so the Pace buttons did
+ * nothing at all and every format landed on its target (18-32s) — which meant
+ * the Instagram Story warning showed permanently, whatever you picked.
+ */
+const PACE_SCALE = { snappy: 0.55, natural: 1, relaxed: 1.35 }
+
+const activeFormat = computed(() => findFormat(chosenFormat.value))
+
+/**
+ * Persist the format. The analyse endpoint reads project.reelFormat to pick
+ * the AI directive — it was never being written, so every format's ordering
+ * and overlay guidance was silently ignored.
+ */
+watch(chosenFormat, async (val, prev) => {
+  if (!val || !prev) return   // skip the initial default assignment
+  try {
+    await $fetch(`/api/projects/${id}/update`, { method: 'POST', body: { reelFormat: val } })
+  } catch { /* not worth interrupting the user over */ }
+})
+
+const adaptivePace = computed(() => {
+  const f = activeFormat.value
+  if (!f) return { secondsPerSlide: 2.4, crossfade: 0.4 }
+
+  const n = Math.max(1, slides.value.length)
+  const target = f.targetSeconds * PACE_SCALE[pace.value]
+  // Clamp so a long set never strobes and a short one never crawls.
+  const secondsPerSlide = Math.min(4.2, Math.max(1.1, +(target / n).toFixed(2)))
+  return {
+    secondsPerSlide,
+    crossfade: Math.min(f.crossfade, secondsPerSlide * 0.3)
+  }
+})
+
+/** Length this pace would produce — shown on the button so the choice is visible. */
+function paceSeconds(paceValue: string): string {
+  const f = activeFormat.value
+  if (!f) return '—'
+  const n = Math.max(1, slides.value.length)
+  const target = f.targetSeconds * (PACE_SCALE as any)[paceValue]
+  const sps = Math.min(4.2, Math.max(1.1, target / n))
+  return (n * sps).toFixed(0)
 }
 
 const duration = computed(() =>
@@ -77,6 +110,16 @@ const sizeMb = computed(() => +(duration.value * (duration.value > 30 ? 7.5 : 10
 const overStory = computed(() => duration.value > 15)
 const overReel = computed(() => duration.value > 90)
 
+/** Could ANY pace get this format under 15s? If not, say so honestly rather
+ *  than implying the user made a wrong choice. */
+const storyPossible = computed(() => {
+  const f = activeFormat.value
+  if (!f) return false
+  const n = Math.max(1, slides.value.length)
+  const sps = Math.min(4.2, Math.max(1.1, (f.targetSeconds * PACE_SCALE.snappy) / n))
+  return n * sps <= 15
+})
+
 onMounted(async () => { support.value = await checkVideoSupport() })
 
 async function render() {
@@ -89,7 +132,13 @@ async function render() {
         isBrandSlide: s.isBrandSlide
       })),
       brand.value,
-      { format: format.value, ...adaptivePace.value }
+      {
+        format: format.value,
+        ...adaptivePace.value,
+        // The luxury format IS the cinematic treatment — not a separate toggle
+        // for the user to find and understand.
+        cinematic: chosenFormat.value === 'luxury_walkthrough'
+      }
     )
     if (!blob) throw new Error('Nothing was produced.')
 
@@ -239,8 +288,12 @@ async function render() {
               <span :class="p.ok ? 'pl-body-c' : 'pl-meta-c'">{{ p.name }}</span>
               <span v-if="!p.ok" class="text-[11.5px] pl-meta-c">too long</span>
             </div>
-            <p v-if="overStory" class="text-[11.5px] leading-relaxed pt-1" style="color: var(--ink)">
-              Choose Snappy to fit a 15-second Story.
+            <p v-if="overStory" class="pl-meta pt-1" style="line-height:1.5">
+              <template v-if="storyPossible">Choose Snappy to fit a 15-second Story.</template>
+              <template v-else>
+                {{ activeFormat?.label }} is built to run longer — Stories aren't
+                the right home for it. It fits everywhere else.
+              </template>
             </p>
           </div>
 
